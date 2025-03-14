@@ -1,0 +1,7 @@
+class RoutesName {
+  static const String splashScreen = '/' ;
+  static const String loadingScreen = "/loading_screen";
+  static const String detailCollectionScreen = "/detail_collection_screen";
+  static const String rideOnProgressScreen = "/ride_on_Progeress_screen";
+  static const String homeScreen = "/home_screen";
+}

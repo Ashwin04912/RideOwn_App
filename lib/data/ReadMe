@@ -1,0 +1,119 @@
+# i think this folder is for exeption handling related stuffs...
+
+
+# # Inheritance in Object-Oriented Programming
+
+# ## Introduction
+# Inheritance is one of the fundamental concepts of Object-Oriented Programming (OOP). It allows a class (child/subclass) to inherit properties and behaviors (methods) from another class (parent/superclass). This promotes code reusability and a hierarchical classification.
+
+# ## Types of Inheritance
+# There are several types of inheritance in OOP:
+
+# ### 1. **Single Inheritance**
+# A child class inherits from a single parent class.
+
+# **Example (Python):**
+# ```python
+# class Parent:
+#     def show(self):
+#         print("This is the parent class")
+
+# class Child(Parent):
+#     pass
+
+# obj = Child()
+# obj.show()  # Output: This is the parent class
+# ```
+
+# ### 2. **Multiple Inheritance**
+# A child class inherits from multiple parent classes.
+
+# **Example (Python):**
+# ```python
+# class Parent1:
+#     def display1(self):
+#         print("This is Parent1")
+
+# class Parent2:
+#     def display2(self):
+#         print("This is Parent2")
+
+# class Child(Parent1, Parent2):
+#     pass
+
+# obj = Child()
+# obj.display1()  # Output: This is Parent1
+# obj.display2()  # Output: This is Parent2
+# ```
+
+# ### 3. **Multilevel Inheritance**
+# A child class inherits from another child class, forming a chain of inheritance.
+
+# **Example (Python):**
+# ```python
+# class Grandparent:
+#     def show_grandparent(self):
+#         print("This is the grandparent class")
+
+# class Parent(Grandparent):
+#     def show_parent(self):
+#         print("This is the parent class")
+
+# class Child(Parent):
+#     pass
+
+# obj = Child()
+# obj.show_grandparent()  # Output: This is the grandparent class
+# obj.show_parent()  # Output: This is the parent class
+# ```
+
+# ### 4. **Hierarchical Inheritance**
+# Multiple child classes inherit from a single parent class.
+
+# **Example (Python):**
+# ```python
+# class Parent:
+#     def show(self):
+#         print("This is the parent class")
+
+# class Child1(Parent):
+#     pass
+
+# class Child2(Parent):
+#     pass
+
+# obj1 = Child1()
+# obj2 = Child2()
+# obj1.show()  # Output: This is the parent class
+# obj2.show()  # Output: This is the parent class
+# ```
+
+# ### 5. **Hybrid Inheritance**
+# A combination of two or more types of inheritance (e.g., multiple and multilevel inheritance together).
+
+# **Example (Python):**
+# ```python
+# class Base:
+#     def base_method(self):
+#         print("Base class method")
+
+# class Derived1(Base):
+#     def derived1_method(self):
+#         print("Derived1 class method")
+
+# class Derived2(Base):
+#     def derived2_method(self):
+#         print("Derived2 class method")
+
+# class Hybrid(Derived1, Derived2):
+#     pass
+
+# obj = Hybrid()
+# obj.base_method()    # Output: Base class method
+# obj.derived1_method()  # Output: Derived1 class method
+# obj.derived2_method()  # Output: Derived2 class method
+# ```
+
+# ## Conclusion
+# Inheritance is a powerful feature in OOP that helps in reducing code duplication and building an organized structure. Understanding different types of inheritance is essential for designing efficient and scalable software systems.
+

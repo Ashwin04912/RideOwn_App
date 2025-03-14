@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1014251110563",
+    "project_id": "gecw-cycles",
+    "storage_bucket": "gecw-cycles.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1014251110563:android:d3818c82c0180198f6ff16",
+        "android_client_info": {
+          "package_name": "com.example.mini_pro_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_wmflQu4qHyqStC6PapK49_JhwLzmV3U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
