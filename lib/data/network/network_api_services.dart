@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mini_pro_app/data/app_exceptions.dart';
@@ -21,13 +23,14 @@ class NetworkApiServices extends BaseApiServices{
   }
   
   @override
-  Future <Map<String, dynamic>> postApi(String url, Map<String, dynamic> data) async{
+  Future <Map<String, dynamic>> postApi({required String url,required Map<String, dynamic> data}) async{
     debugPrint("hello");
      try {
       final response = await _dio.post(url, data: data);
+      final Map<String, dynamic> responseData = json.decode(response.data);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-         return (response.data);
+         return responseData;
       } else {
         throw InternetException();
       }

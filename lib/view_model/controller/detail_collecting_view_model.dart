@@ -3,13 +3,13 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mini_pro_app/repository/detail_collecting_repo/detail_collecting_repo.dart';
+import 'package:mini_pro_app/repository/esp_repository/esp_local_repo.dart';
 import 'package:mini_pro_app/res/routes/routes.dart';
 import 'package:mini_pro_app/res/routes/routes_name.dart';
 import 'package:mini_pro_app/utils/utils.dart';
 
 class DetailCollectingViewModel extends GetxController {
-  final _api = DetailCollectingRepo();
+  final _api = EspLocalRepo();
 
   final nameController = TextEditingController().obs;
   final emailController = TextEditingController().obs;
@@ -25,7 +25,8 @@ class DetailCollectingViewModel extends GetxController {
     required String otp,
     required String year,
   }) async {
-    final DatabaseReference databaseRef = FirebaseDatabase.instance.ref('user_data');
+    final DatabaseReference databaseRef =
+        FirebaseDatabase.instance.ref('user_data');
 
     try {
       await databaseRef.child(phoneController.value.text).set({
@@ -50,17 +51,97 @@ class DetailCollectingViewModel extends GetxController {
     }
   }
 
+  Future<Map<String, dynamic>?> getAllUserData() async {
+    final DatabaseReference databaseRef =
+        FirebaseDatabase.instance.ref('user_data');
+
+    try {
+      DatabaseEvent event = await databaseRef.once();
+
+      if (event.snapshot.value != null) {
+        Map<String, dynamic> userData =
+            Map<String, dynamic>.from(event.snapshot.value as Map);
+
+        if (kDebugMode) {
+          print("Fetched user data successfully: $userData");
+        }
+
+        return userData;
+      } else {
+        if (kDebugMode) {
+          print("No user data found.");
+        }
+        return null;
+      }
+    } on FirebaseException catch (e) {
+      if (kDebugMode) {
+        print("Firebase error: ${e.message}");
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print("Unexpected error: $e");
+      }
+      return null;
+    }
+  }
+
   void getOtp() {
     loading.value = true;
     var data = {
       "data": "getotp",
-      "phone": "phoneController.value.text",
+      "phone": phoneController.value.text,
     };
-
+    Get.toNamed(RoutesName.loadingScreen);
     _api.getOtpApi(data).then((value) {
       loading.value = false;
       Utils.snakBar('Success', "");
-      Get.toNamed(RoutesName.loadingScreen);
+    }).onError((error, name) {
+      //name is stackTrace
+      loading.value = false;
+      Utils.snakBar('Error', error.toString());
+    });
+  }
+
+  void checkPassword({required String otp}) {
+    loading.value = true;
+    var data = {
+      "otp": otp,
+    };
+
+    _api.checkPasswordApi(data).then((value) {
+      loading.value = false;
+      Utils.snakBar('Success', "");
+    }).onError((error, name) {
+      //name is stackTrace
+      loading.value = false;
+      Utils.snakBar('Error', error.toString());
+    });
+  }
+
+  void lockCycle() {
+    loading.value = true;
+    var data = {
+      "data": "lock_cycle",
+    };
+
+    _api.lockCycleApi(data).then((value) {
+      loading.value = false;
+      Utils.snakBar('Success', "");
+    }).onError((error, name) {
+      //name is stackTrace
+      loading.value = false;
+      Utils.snakBar('Error', error.toString());
+    });
+  }
+
+  void returnCycle({required String otp}) {
+    loading.value = true;
+    var data = {"data": "return_cycle", "otp": otp};
+
+    _api.returnCycleApi(data).then((value) {
+      loading.value = false;
+      Utils.snakBar('Success', "");
     }).onError((error, name) {
       //name is stackTrace
       loading.value = false;

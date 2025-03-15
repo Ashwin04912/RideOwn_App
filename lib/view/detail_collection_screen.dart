@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mini_pro_app/repository/detail_collecting_repo/detail_collecting_repo.dart';
+import 'package:mini_pro_app/repository/esp_repository/esp_local_repo.dart';
 import 'package:mini_pro_app/res/routes/routes_name.dart';
 import 'package:mini_pro_app/view/loading_screen.dart';
 import 'package:mini_pro_app/view_model/controller/detail_collecting_view_model.dart';
