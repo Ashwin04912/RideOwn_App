@@ -1,15 +1,10 @@
 import 'dart:math';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mini_pro_app/repository/esp_repository/esp_local_repo.dart';
-import 'package:mini_pro_app/res/routes/routes_name.dart';
-import 'package:mini_pro_app/view/loading_screen.dart';
 import 'package:mini_pro_app/view_model/controller/detail_collecting_view_model.dart';
 import 'package:slider_button/slider_button.dart';
-import 'package:firebase_database/firebase_database.dart';
 
 class DetailCollectionScreen extends StatefulWidget {
   const DetailCollectionScreen({super.key});
@@ -22,8 +17,7 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
   final detailCollectionController = Get.put(DetailCollectingViewModel());
 
   final _formKey = GlobalKey<FormState>();
-  final _databaseRef =
-      FirebaseDatabase.instance.ref("user_data"); // Firebase DB reference
+
 
   String? _selectedClass;
   final List<String> _classes = [
@@ -36,7 +30,7 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
   bool _formSubmitted = false;
 
   bool _isFormValid() {
-    return _formKey.currentState?.validate() ?? false && _selectedClass != null;
+    return _formKey.currentState?.validate() ?? false ;
   }
 
   void _submitForm() async {
@@ -163,7 +157,7 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                     const SizedBox(height: 20),
                     _buildTextField(
                       "Full Name",
-                      detailCollectionController.nameFocusNode.value,
+
                       detailCollectionController.nameController.value,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -175,7 +169,7 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                     const SizedBox(height: 15),
                     _buildTextField(
                       "Email",
-                      detailCollectionController.emailFocusNode.value,
+
                       detailCollectionController.emailController.value,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
@@ -191,7 +185,7 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                     const SizedBox(height: 15),
                     _buildTextField(
                       "Phone Number",
-                      detailCollectionController.phoneFocusNode.value,
+                      
                       detailCollectionController.phoneController.value,
                       keyboardType: TextInputType.phone,
                       validator: (value) {
@@ -273,7 +267,6 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
 
   Widget _buildTextField(
     String label,
-    FocusNode focus,
     TextEditingController controller, {
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,

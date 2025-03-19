@@ -3,7 +3,8 @@ import 'package:mini_pro_app/res/routes/routes_name.dart';
 import 'package:mini_pro_app/view/detail_collection_screen.dart';
 import 'package:mini_pro_app/view/home_screen.dart';
 import 'package:mini_pro_app/view/loading_screen.dart';
-import 'package:mini_pro_app/view/ride_on_progress_scree.dart';
+import 'package:mini_pro_app/view/otp_screen.dart';
+import 'package:mini_pro_app/view/ride_on_progress_screen.dart';
 import 'package:mini_pro_app/view/splash_screen.dart';
 
 class AppRoutes {
@@ -27,6 +28,11 @@ class AppRoutes {
         GetPage(
           name: RoutesName.rideOnProgressScreen,
           page: () => const RideOnProgressScreen(),
+        ),
+
+        GetPage(
+          name: RoutesName.otpScreen,
+          page: () => const OtpScreen(isReturnCycle: false,),
         ),
       ];
 }

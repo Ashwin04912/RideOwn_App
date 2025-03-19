@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mini_pro_app/data/app_exceptions.dart';
@@ -23,22 +24,24 @@ class NetworkApiServices extends BaseApiServices{
   }
   
   @override
-  Future <Map<String, dynamic>> postApi({required String url,required Map<String, dynamic> data}) async{
-    debugPrint("hello");
+  Future <Either<AppExceptions,Map<String, dynamic>>> postApi({required String url,required Map<String, dynamic> data}) async{
+    debugPrint("in post api");
      try {
+      debugPrint(url);
       final response = await _dio.post(url, data: data);
-      final Map<String, dynamic> responseData = json.decode(response.data);
+      debugPrint(response.data);
+      // final Map<String, dynamic> responseData =response.data;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-         return responseData;
+         return right(response.data);
       } else {
-        throw InternetException();
+        return left(InternetException());
       }
     } on DioException catch (e) {
-      throw ServerExxeption();
+      return  left(ServerExxeption());
     } catch (e) {
       print("Unexpected Error: $e");
-      throw ServerExxeption();
+      return left(ServerExxeption());
     }
   }
 

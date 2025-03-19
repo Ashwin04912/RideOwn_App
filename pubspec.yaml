@@ -45,6 +45,7 @@ dependencies:
   get: ^4.7.2
   shared_preferences: ^2.5.2
   fluttertoast: ^8.2.12
+  dartz: ^0.10.1
 
 dev_dependencies:
   flutter_test:

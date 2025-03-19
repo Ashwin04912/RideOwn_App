@@ -10,7 +10,7 @@ class Utils {
   }
 
   static snakBar(String title, String message) {
-    Get.snackbar(title, message);
+    Get.snackbar(title, message,colorText: AppColors.whiteColor);
   }
 
 
