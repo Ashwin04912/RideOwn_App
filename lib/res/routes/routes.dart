@@ -1,5 +1,7 @@
 import 'package:get/get_navigation/get_navigation.dart';
 import 'package:mini_pro_app/res/routes/routes_name.dart';
+import 'package:mini_pro_app/view/admin_dashboard.dart';
+import 'package:mini_pro_app/view/admin_login_screen.dart';
 import 'package:mini_pro_app/view/detail_collection_screen.dart';
 import 'package:mini_pro_app/view/home_screen.dart';
 import 'package:mini_pro_app/view/loading_screen.dart';
@@ -33,6 +35,17 @@ class AppRoutes {
         GetPage(
           name: RoutesName.otpScreen,
           page: () => const OtpScreen(isReturnCycle: false,),
+        ),
+
+         GetPage(
+          name: RoutesName.adminLoginScreen,
+          page: () =>  AdminLoginScreen(),
+        ),
+
+
+         GetPage(
+          name: RoutesName.adminDashboard,
+          page: () =>  const AdminDashboard(),
         ),
       ];
 }
