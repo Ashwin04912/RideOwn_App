@@ -19,29 +19,71 @@ class NetworkApiServices extends BaseApiServices {
     ),
   );
 
-  @override
-  Future<Either<AppExceptions, Map<String, dynamic>>> postApi(
-      {required String url, required Map<String, dynamic> data}) async {
-    debugPrint("in post api");
-    try {
-      debugPrint(url);
-      final response = await _dio.post(url, data: data);
-      debugPrint(response.data);
-      // final Map<String, dynamic> responseData =response.data;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return right(response.data);
-      } else {
-        return left(InternetException());
-      }
-    } on DioException catch (e) {
-      debugPrint("DioException : $e");
-      return left(ServerException());
-    } catch (e) {
-      debugPrint("Unexpected Error: $e");
-      return left(ServerException());
+ @override
+Future<Either<AppExceptions, Map<String, dynamic>>> postApi({
+  required String url, 
+  required Map<String, dynamic> data
+}) async {
+  debugPrint("in post api");
+  try {
+    debugPrint(url);
+    
+    // Set a reasonable timeout
+    final response = await _dio.post(
+      url, 
+      data: data,
+      options: Options(
+        sendTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+      ),
+    );
+    
+    debugPrint("Response status: ${response.statusCode}");
+    debugPrint("Response data: ${response.data}");
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return right(response.data is Map<String, dynamic> 
+          ? response.data 
+          : {"data": response.data});
+    } else {
+      // Handle different status codes with more specific exceptions
+      return left(ServerException("Server responded with status code: ${response.statusCode}"));
     }
+  } on DioException catch (e) {
+    debugPrint("DioException: $e");
+    
+    // More specific error handling based on Dio exception type
+    if (e.type == DioExceptionType.connectionTimeout || 
+        e.type == DioExceptionType.sendTimeout || 
+        e.type == DioExceptionType.receiveTimeout) {
+      return left(RequestTimeOut("Request timed out. Please try again."));
+    } else if (e.type == DioExceptionType.connectionError) {
+      return left(InternetException("No internet connection. Please check your network."));
+    } else if (e.response != null) {
+      // Handle specific HTTP error codes
+      final statusCode = e.response?.statusCode;
+      final responseData = e.response?.data;
+      String errorMessage = "Server error";
+      
+      if (responseData is Map && responseData.containsKey('message')) {
+        errorMessage = responseData['message'];
+      }
+      
+      if (statusCode == 500) {
+        return left(ServerException("Internal server error: $errorMessage"));
+      } else if (statusCode == 404) {
+        return left(ServerException("Resource not found: $errorMessage"));
+      } else {
+        return left(ServerException("HTTP error $statusCode: $errorMessage"));
+      }
+    } else {
+      return left(ServerException("Network error: ${e.message}"));
+    }
+  } catch (e) {
+    debugPrint("Unexpected Error: $e");
+    return left(ServerException("Unexpected error occurred: $e"));
   }
+}
 
   @override
   Future<Either<AppExceptions, Unit>> loginApi(

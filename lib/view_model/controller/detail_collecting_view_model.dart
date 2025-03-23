@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:mini_pro_app/repository/esp_repository/esp_local_repo.dart';
 import 'package:mini_pro_app/res/routes/routes_name.dart';
 import 'package:mini_pro_app/utils/utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailCollectingViewModel extends GetxController {
   final _api = EspLocalRepo();
@@ -21,44 +22,48 @@ class DetailCollectingViewModel extends GetxController {
   RxBool loading = false.obs;
 
   Future<void> saveUserDataToFirebase({
-  required String otp,
-  required String year,
-}) async {
-  final DatabaseReference databaseRef = FirebaseDatabase.instance.ref('cycle_one');
+    required String otp,
+    required String year,
+  }) async {
+    loading.value = true;
+    final DatabaseReference databaseRef =
+        FirebaseDatabase.instance.ref('cycle_one');
 
-  try {
-    // Set the availability flag separately
-    await databaseRef.child("isAvailable").set(false);
+    try {
+      // Set the availability flag separately
+      await databaseRef.child("isAvailable").set(false);
 
-    // Get the phone number
-    String phoneNumber = phoneController.value.text;
+      // Get the phone number
+      String phoneNumber = phoneController.value.text;
 
-    // Save user data using the phone number as the key
-    await databaseRef.child("users").child(phoneNumber.toString()).set({
-      "otp": otp,
-      "phone": phoneNumber,
-      "name": nameController.value.text,
-      "email": emailController.value.text,
-      "year": year,
-      "timestamp": DateTime.now().toIso8601String(),
-      "status": "On_Ride"
-    });
+      // Save user data using the phone number as the key
+      await databaseRef.child("users").child(phoneNumber.toString()).set({
+        "otp": otp,
+        "phone": phoneNumber,
+        "name": nameController.value.text,
+        "email": emailController.value.text,
+        "year": year,
+        "timestamp": DateTime.now().toIso8601String(),
+        "status": "On_Ride"
+      });
 
-    if (kDebugMode) {
-      print("User data saved successfully for phone: $phoneNumber");
-    }
-  } on FirebaseException catch (e) {
-    if (kDebugMode) {
-      print("Firebase error: ${e.message}");
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print("Unexpected error: $e");
+      if (kDebugMode) {
+        print("User data saved successfully for phone: $phoneNumber");
+      }
+    } on FirebaseException catch (e) {
+      loading.value = false;
+      if (kDebugMode) {
+        print("Firebase error: ${e.message}");
+      }
+    } catch (e) {
+      loading.value = false;
+      if (kDebugMode) {
+        print("Unexpected error: $e");
+      }
     }
   }
-}
 
-  void getOtp() {
+  void getOtp() async{
     Get.toNamed(RoutesName.loadingScreen);
     loading.value = true;
     Map<String, dynamic> data = {
@@ -66,55 +71,55 @@ class DetailCollectingViewModel extends GetxController {
       "phone": phoneController.value.text,
     };
 
-    _api.getOtpApi(data).then((value) {
-      loading.value = false;
-      Utils.snakBar('Success', "");
-      Get.toNamed(RoutesName.otpScreen);
-    }).onError((error, name) {
-      //name is stackTrace
-      loading.value = false;
-      Utils.snakBar('Error', error.toString());
+    await _api.getOtpApi(data).then((value) {
+      value.fold((f) {
+        Get.back();
+        loading.value = false;
+        Utils.snakBar('Error', f.toString());
+      }, (s) {
+        loading.value = false;
+        Utils.snakBar('Success', "");
+        Get.toNamed(RoutesName.otpScreen);
+      });
     });
   }
-
-
 
   void checkPassword({required String otp}) {
     // Get.toNamed(RoutesName.loadingScreen);
     loading.value = true;
     Map<String, dynamic> data = {
       "otp": otp,
-      
     };
 
     _api.checkPasswordApi(data).then((value) {
-      loading.value = false;
-      Utils.snakBar('Success', "Cycle has been Unlocked../n Happy Riding..");
-      Get.toNamed(RoutesName.rideOnProgressScreen);
-    }).onError((error, name) {
-      //name is stackTrace
-      loading.value = false;
-      Utils.snakBar('Error', error.toString());
+      value.fold((f) {
+        loading.value = false;
+        Utils.snakBar('Error', f.toString());
+      }, (s) async {
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        loading.value = false;
+        Utils.snakBar('Success', "Cycle has been Unlocked../n Happy Riding..");
+        prefs.setBool("ride_status", true);
+        Get.off(RoutesName.rideOnProgressScreen);
+      });
     });
   }
 
-
-void lockCycle() {
+  void lockCycle() {
     // Get.toNamed(RoutesName.loadingScreen);
     loading.value = true;
     Map<String, dynamic> data = {
       "data": "lock_cycle",
-      
     };
 
     _api.lockCycleApi(data).then((value) {
-      loading.value = false;
-      Utils.snakBar('Success', "Cycle has been locked...");
-      Get.toNamed(RoutesName.rideOnProgressScreen);
-    }).onError((error, name) {
-      //name is stackTrace
-      loading.value = false;
-      Utils.snakBar('Error', error.toString());
+      value.fold((f) {
+        Utils.snakBar("Error", f.toString());
+      }, (s) {
+        loading.value = false;
+        Utils.snakBar('Success', "Cycle has been locked...");
+        Get.toNamed(RoutesName.rideOnProgressScreen);
+      });
     });
   }
 
@@ -123,19 +128,18 @@ void lockCycle() {
     loading.value = true;
     Map<String, dynamic> data = {
       "data": "return_cycle",
-      "otp":otp,
-      
+      "otp": otp,
     };
 
     _api.returnCycleApi(data).then((value) {
-      loading.value = false;
-      Utils.snakBar('Success', "Cycle has been locked...");
-      Get.toNamed(RoutesName.homeScreen);
-    }).onError((error, name) {
-      //name is stackTrace
-      loading.value = false;
-      Utils.snakBar('Error', error.toString());
+      value.fold((f) {
+        loading.value = false;
+        Utils.snakBar('Error', f.toString());
+      }, (s) {
+        loading.value = false;
+        Utils.snakBar('Success', "Cycle has been locked...");
+        Get.off(RoutesName.homeScreen);
+      });
     });
   }
-
 }

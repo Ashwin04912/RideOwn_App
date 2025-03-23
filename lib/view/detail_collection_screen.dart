@@ -18,7 +18,6 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
 
   final _formKey = GlobalKey<FormState>();
 
-
   String? _selectedClass;
   final List<String> _classes = [
     '1st Year',
@@ -30,7 +29,7 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
   bool _formSubmitted = false;
 
   bool _isFormValid() {
-    return _formKey.currentState?.validate() ?? false ;
+    return (_formKey.currentState?.validate() ?? false) && _selectedClass != null;
   }
 
   void _submitForm() async {
@@ -42,7 +41,7 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
       int otp = generateOtp();
       debugPrint("Generated OTP: $otp");
 
-    detailCollectionController.saveUserDataToFirebase(otp: otp.toString(),year: _selectedClass!);
+      detailCollectionController.saveUserDataToFirebase(otp: otp.toString(), year: _selectedClass!);
 
       // Show OTP in a popup
       _showOtpPopup(otp);
@@ -60,11 +59,10 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
     }
   }
 
-
-
   void _showOtpPopup(int otp) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.grey[900],
@@ -112,7 +110,8 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
           actions: [
             TextButton(
               onPressed: () {
-              debugPrint("hello screen");
+                debugPrint("OK pressed");
+                Navigator.of(context).pop();
                 detailCollectionController.getOtp();
               },
               child: Text(
@@ -130,9 +129,32 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: false,
+      // Added AppBar
+      appBar: AppBar(
+        backgroundColor: Colors.grey[900],
+        elevation: 0,
+        title: Text(
+          "Profile Details",
+          style: GoogleFonts.montserrat(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.teal),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(15),
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Center(
           child: Card(
             color: Colors.grey[900],
@@ -157,7 +179,6 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                     const SizedBox(height: 20),
                     _buildTextField(
                       "Full Name",
-
                       detailCollectionController.nameController.value,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -169,7 +190,6 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                     const SizedBox(height: 15),
                     _buildTextField(
                       "Email",
-
                       detailCollectionController.emailController.value,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
@@ -185,7 +205,6 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                     const SizedBox(height: 15),
                     _buildTextField(
                       "Phone Number",
-                      
                       detailCollectionController.phoneController.value,
                       keyboardType: TextInputType.phone,
                       validator: (value) {
@@ -215,45 +234,41 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                         ),
                       ),
                     const SizedBox(height: 30),
-                    detailCollectionController.loading.value
-                        ? Center(
-                            child: SpinKitDoubleBounce(
-                              // This creates a pulsing leaf effect
-                              color: Colors.greenAccent.shade400,
-                              // waveColor: Colors.lightGreen,
-                              size: 100.0,
-                            ),
-                          )
-                        : Center(
-                            child: SliderButton(
-                              action: () async {
-                                setState(() {});
-                                _submitForm();
-                                return _isFormValid();
-                              },
-                              alignLabel: Alignment.center,
-                              buttonColor: Colors.white,
-                              backgroundColor: _isFormValid()
-                                  ? Colors.teal[700]!
-                                  : Colors.grey,
-                              shimmer: true,
-                              label: Text(
-                                "Slide to Submit",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                  letterSpacing: 1.2,
+                    Obx(
+                      () => detailCollectionController.loading.value
+                          ? Center(
+                              child: SpinKitDoubleBounce(
+                                color: Colors.greenAccent.shade400,
+                                size: 100.0,
+                              ),
+                            )
+                          : Center(
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: _submitForm,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.teal[400],
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 5,
+                                    shadowColor: Colors.teal.withOpacity(0.5),
+                                  ),
+                                  child: Text(
+                                    "SUBMIT",
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              icon: Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.teal[700]!,
-                              ),
-                              height: 60,
-                              width: double.infinity,
                             ),
-                          ),
+                    ),
                     const SizedBox(height: 10),
                   ],
                 ),
@@ -272,7 +287,6 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
     String? Function(String?)? validator,
   }) {
     return TextFormField(
-      // focusNode: focus,
       controller: controller,
       keyboardType: keyboardType,
       style: GoogleFonts.montserrat(fontSize: 16, color: Colors.white),
@@ -287,6 +301,14 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.teal[400]!),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
         filled: true,
         fillColor: Colors.grey[850],
@@ -312,12 +334,12 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
           .toList(),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.grey[850], // Light grey background
+        fillColor: Colors.grey[850],
         labelText: "Select Year",
         labelStyle: GoogleFonts.montserrat(color: Colors.green[800]),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12), // Rounded border
-          borderSide: BorderSide(color: Colors.green[600]!), // Green border
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.green[600]!),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -327,10 +349,19 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.green[800]!, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
-      dropdownColor: Colors.grey[850], // Light grey dropdown background
+      dropdownColor: Colors.grey[850],
+      validator: (value) => value == null ? "Please select a year" : null,
     );
   }
 }

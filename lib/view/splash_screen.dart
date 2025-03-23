@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mini_pro_app/res/assets/image_assets.dart';
 import 'package:mini_pro_app/view/home_screen.dart';
@@ -8,7 +9,6 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _SplashScreenState createState() => _SplashScreenState();
 }
 
@@ -20,10 +20,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    splash.isRideOnProgress();
+    
+    // Start your splash screen service
+    // splash.isRideOnProgress();
 
+    // Initialize animation
     _controller = AnimationController(
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 3),
       vsync: this,
     );
 
@@ -32,28 +35,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       curve: Curves.easeInOut,
     );
 
+    // Start animation
     _controller.forward();
 
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _navigateToHome();
-      }
-    });
+    // Navigate after animation completes
+    Future.delayed(const Duration(seconds: 3), _navigateToHome);
   }
 
   void _navigateToHome() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 800),
-        pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-      ),
-    );
+    if (mounted) {
+      Get.off(
+        () => const HomeScreen(),
+        transition: Transition.fade,
+        duration: const Duration(milliseconds: 800),
+      );
+    }
   }
 
   @override
