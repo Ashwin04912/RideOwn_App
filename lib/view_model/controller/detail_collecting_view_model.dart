@@ -19,6 +19,8 @@ class DetailCollectingViewModel extends GetxController {
   final emailFocusNode = FocusNode().obs;
   final phoneFocusNode = FocusNode().obs;
 
+  RxString globalPh = "".obs;
+
   RxBool loading = false.obs;
 
   Future<void> saveUserDataToFirebase({
@@ -35,7 +37,8 @@ class DetailCollectingViewModel extends GetxController {
 
       // Get the phone number
       String phoneNumber = phoneController.value.text;
-
+final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString("saved_phone", phoneNumber.toString());
       // Save user data using the phone number as the key
       await databaseRef.child("users").child(phoneNumber.toString()).set({
         "otp": otp,
@@ -46,6 +49,9 @@ class DetailCollectingViewModel extends GetxController {
         "timestamp": DateTime.now().toIso8601String(),
         "status": "On_Ride"
       });
+
+      globalPh.value = phoneNumber;
+      
 
       if (kDebugMode) {
         print("User data saved successfully for phone: $phoneNumber");
@@ -63,7 +69,7 @@ class DetailCollectingViewModel extends GetxController {
     }
   }
 
-  void getOtp() async{
+  void getOtp() async {
     Get.toNamed(RoutesName.loadingScreen);
     loading.value = true;
     Map<String, dynamic> data = {
@@ -79,19 +85,19 @@ class DetailCollectingViewModel extends GetxController {
       }, (s) {
         loading.value = false;
         Utils.snakBar('Success', "");
-        Get.toNamed(RoutesName.otpScreen);
+        Get.offNamed(RoutesName.otpScreen);
       });
     });
   }
 
-  void checkPassword({required String otp}) {
+  void checkPassword({required String otp}) async {
     // Get.toNamed(RoutesName.loadingScreen);
     loading.value = true;
     Map<String, dynamic> data = {
       "otp": otp,
     };
 
-    _api.checkPasswordApi(data).then((value) {
+    await _api.checkPasswordApi(data).then((value) {
       value.fold((f) {
         loading.value = false;
         Utils.snakBar('Error', f.toString());
@@ -100,7 +106,7 @@ class DetailCollectingViewModel extends GetxController {
         loading.value = false;
         Utils.snakBar('Success', "Cycle has been Unlocked../n Happy Riding..");
         prefs.setBool("ride_status", true);
-        Get.off(RoutesName.rideOnProgressScreen);
+        Get.offAllNamed(RoutesName.rideOnProgressScreen);
       });
     });
   }
@@ -118,27 +124,36 @@ class DetailCollectingViewModel extends GetxController {
       }, (s) {
         loading.value = false;
         Utils.snakBar('Success', "Cycle has been locked...");
-        Get.toNamed(RoutesName.rideOnProgressScreen);
+        // Get.toNamed(RoutesName.rideOnProgressScreen);
       });
     });
   }
 
-  void returnCycle({required String otp}) {
+  void returnCycle({required String otp}) async {
     // Get.toNamed(RoutesName.loadingScreen);
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    //  prefs.setBool("ride_status", false);
     loading.value = true;
     Map<String, dynamic> data = {
       "data": "return_cycle",
       "otp": otp,
     };
+   
+    final String number =prefs.getString("saved_phone")??"";
+     debugPrint("hello nubmer  $number");
 
-    _api.returnCycleApi(data).then((value) {
+    _api
+        .returnCycleApi(data: data, phoneNumber: number)
+        .then((value) {
       value.fold((f) {
         loading.value = false;
         Utils.snakBar('Error', f.toString());
       }, (s) {
+        prefs.setBool("ride_status", false);
         loading.value = false;
         Utils.snakBar('Success', "Cycle has been locked...");
-        Get.off(RoutesName.homeScreen);
+        Get.offNamed(RoutesName.homeScreen);
       });
     });
   }

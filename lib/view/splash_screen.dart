@@ -44,11 +44,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   void _navigateToHome() {
     if (mounted) {
-      Get.off(
-        () => const HomeScreen(),
-        transition: Transition.fade,
-        duration: const Duration(milliseconds: 800),
-      );
+    splash.isRideOnProgress();
     }
   }
 

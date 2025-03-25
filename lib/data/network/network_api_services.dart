@@ -105,7 +105,7 @@ Future<Either<AppExceptions, Map<String, dynamic>>> postApi({
 Future<Either<AppExceptions, UserData>> getAllDataFromFirebase({
   required String path,
 }) async {
-  // try {
+  try {
     debugPrint("Fetching data from Firebase at path: $path");
 
     DatabaseReference ref = _database.ref(path);
@@ -141,13 +141,13 @@ Future<Either<AppExceptions, UserData>> getAllDataFromFirebase({
     } else {
       return left(AppExceptions("Unexpected data format at path: $path"));
     }
-//   } on FirebaseException catch (e) {
-//     debugPrint("Firebase error: ${e.message}");
-//     return left(AppExceptions("Firebase error: ${e.message}"));
-//   } catch (e) {
-//     debugPrint("Unexpected error: $e");
-//     return left(AppExceptions("Unexpected error: ${e.toString()}"));
-//   }
+  } on FirebaseException catch (e) {
+    debugPrint("Firebase error: ${e.message}");
+    return left(AppExceptions("Firebase error: ${e.message}"));
+  } catch (e) {
+    debugPrint("Unexpected error: $e");
+    return left(AppExceptions("Unexpected error: ${e.toString()}"));
+  }
 }
 
 }

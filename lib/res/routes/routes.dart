@@ -30,6 +30,8 @@ class AppRoutes {
         GetPage(
           name: RoutesName.rideOnProgressScreen,
           page: () => const RideOnProgressScreen(),
+          transition: Transition.circularReveal,
+          transitionDuration: const Duration(microseconds: 500),
         ),
 
         GetPage(
@@ -38,6 +40,7 @@ class AppRoutes {
         ),
 
          GetPage(
+          
           name: RoutesName.adminLoginScreen,
           page: () =>  AdminLoginScreen(),
         ),
