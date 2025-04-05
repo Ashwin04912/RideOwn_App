@@ -33,7 +33,7 @@ class DetailCollectingViewModel extends GetxController {
 
     try {
       // Set the availability flag separately
-      await databaseRef.child("isAvailable").set(false);
+      // await databaseRef.child("isAvailable").set(false);
 
       // Get the phone number
       String phoneNumber = phoneController.value.text;
@@ -47,8 +47,11 @@ final SharedPreferences prefs = await SharedPreferences.getInstance();
         "email": emailController.value.text,
         "year": year,
         "timestamp": DateTime.now().toIso8601String(),
-        "status": "On_Ride"
+        "returned_time" :"",
+        "status": ""
       });
+
+      //On_Ride
 
       globalPh.value = phoneNumber;
       
@@ -95,6 +98,7 @@ final SharedPreferences prefs = await SharedPreferences.getInstance();
     loading.value = true;
     Map<String, dynamic> data = {
       "otp": otp,
+
     };
 
     await _api.checkPasswordApi(data).then((value) {
@@ -120,6 +124,7 @@ final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     _api.lockCycleApi(data).then((value) {
       value.fold((f) {
+        Get.back();
         Utils.snakBar("Error", f.toString());
       }, (s) {
         loading.value = false;

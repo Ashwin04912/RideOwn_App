@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:mini_pro_app/models/user_data/user_data_model.dart';
+import 'package:mini_pro_app/res/colors/app_colors.dart';
 import 'package:mini_pro_app/view_model/controller/admin_dashboard_controller.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -149,8 +150,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF252525),
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
+          title: const Text('Logout',style: TextStyle(color: AppColors.whiteColor),),
+          content: const Text('Are you sure you want to logout?',style: TextStyle(color: AppColors.whiteColor),),
           actions: [
             TextButton(
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
@@ -162,10 +163,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo,
               ),
-              child: const Text('Logout'),
+              child: const Text('Logout',style: TextStyle(color: AppColors.whiteColor),),
               onPressed: () {
-                Navigator.of(context).pop();
-                // Add logout functionality here
+                Get.back();
+                Get.back();
               },
             ),
           ],
@@ -179,7 +180,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     int onRideCount = 0;
     int returnedCount = 0;
 
-    if (dashBoardController.userData.value?.isAvailable == true) {
+    if (dashBoardController.userData.value?.isAvailable == false) {
       onRideCount = onRideCount + 1;
     } else {
      

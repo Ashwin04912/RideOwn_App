@@ -1,47 +1,27 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:multicast_dns/multicast_dns.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class AppUrls {
   static String? _resolvedIp;
   static const _fallbackIp = '192.168.45.111'; // Optional: keep your last known working IP
-  static const _multicastChannel = MethodChannel('multicast_lock');
+  static const _firebasePath = 'cycle_one/ip_address'; // Path to the IP address in Firebase
 
-  /// Call this in `main()` before anything else if targeting Android
-  static Future<void> enableMulticastLock() async {
-    if (Platform.isAndroid) {
-      try {
-        await _multicastChannel.invokeMethod('acquire');
-        debugPrint('✅ Multicast lock acquired');
-      } on PlatformException catch (e) {
-        debugPrint('❌ Failed to acquire multicast lock: $e');
-      }
-    }
-  }
-
-  static Future<void> resolveEspIp() async {
-    final MDnsClient client = MDnsClient();
-    await client.start();
-
+  /// Fetch the ESP IP address from Firebase
+  static Future<void> resolveEspIpFromFirebase() async {
     try {
-      const String serviceName = 'gecw-cycles.local';
-      final response = await client
-          .lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv4(serviceName))
-          .toList();
-      
-      debugPrint("🔍 mDNS response: $response");
+      final DatabaseReference databaseRef = FirebaseDatabase.instance.ref(_firebasePath);
+      final DataSnapshot snapshot = await databaseRef.get();
 
-      if (response.isNotEmpty) {
-        _resolvedIp = response.first.address.address;
-        debugPrint("✅ ESP resolved IP: $_resolvedIp");
+      if (snapshot.exists) {
+        _resolvedIp = snapshot.value as String;
+        debugPrint("✅ ESP IP resolved from Firebase: $_resolvedIp");
       } else {
-        debugPrint("⚠️ No IP resolved. Falling back to $_fallbackIp");
+        debugPrint("⚠️ No IP found in Firebase. Falling back to $_fallbackIp");
       }
     } catch (e) {
-      debugPrint('❌ Error resolving ESP IP: $e');
-    } finally {
-      client.stop();
+      debugPrint('❌ Error fetching ESP IP from Firebase: $e');
     }
   }
 

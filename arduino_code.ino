@@ -1,10 +1,9 @@
 #include <WiFi.h>
 #include <WebServer.h>
-#include <ESPmDNS.h>
 #include <Firebase_ESP_Client.h>
-#include <ArduinoJson.h>  // Install ArduinoJson library
-#include <Preferences.h>   // ESP32 Preferences library for persistent storage
-
+#include <ArduinoJson.h>
+#include <Preferences.h>
+#include <time.h>
 //Provide the token generation process info.
 #include "addons/TokenHelper.h"
 //Provide the RTDB payload printing info and other helper functions.
@@ -26,61 +25,43 @@ FirebaseConfig config;
 // Web Server
 WebServer server(80);
 
-// Create a preferences object
+// Preferences for persistent storage
 Preferences preferences;
 
 String globalOtp = "";
 String phone = "";
-const int LED_PIN = 2;   // ESP32 built-in LED (GPIO 2)
+const int LED_PIN = 2;  // ESP32 built-in LED (GPIO 2)
 
 // Function to store OTP in Preferences
 void storeOtpInPreferences(String otp, String phoneNumber) {
-  // Open preferences with "cycle-lock" namespace
   preferences.begin("cycle-lock", false);
-  
-  // Store OTP and phone number
   preferences.putString("otp", otp);
   preferences.putString("phone", phoneNumber);
-  
-  // Close the preferences
   preferences.end();
-  
   Serial.println("OTP and phone number stored in Preferences");
 }
 
 // Function to retrieve OTP from Preferences
 void retrieveOtpFromPreferences() {
-  // Open preferences with "cycle-lock" namespace
-  preferences.begin("cycle-lock", true); // true = read-only mode
-  
-  // Retrieve OTP and phone number
+  preferences.begin("cycle-lock", true);
   globalOtp = preferences.getString("otp", "");
   phone = preferences.getString("phone", "");
-  
-  // Close the preferences
   preferences.end();
-  
+
   if (globalOtp != "") {
     Serial.println("Retrieved from Preferences - OTP: " + globalOtp + ", Phone: " + phone);
   } else {
+     storeOtpInPreferences("7926", "8075627926");
     Serial.println("No valid OTP found in Preferences");
   }
 }
 
 // Function to clear OTP from Preferences
 void clearOtpFromPreferences() {
-  // Open preferences with "cycle-lock" namespace
   preferences.begin("cycle-lock", false);
-  
-  // Clear OTP and phone (you can use remove() to delete the key or just store empty string)
   preferences.putString("otp", "");
-  // If you want to completely remove the keys:
-  // preferences.remove("otp");
-  // preferences.remove("phone");
-  
-  // Close the preferences
+  preferences.putString("phone", "");
   preferences.end();
-  
   globalOtp = "";
   phone = "";
   Serial.println("OTP cleared from Preferences");
@@ -88,14 +69,11 @@ void clearOtpFromPreferences() {
 
 // Fetch OTP from Firebase
 String fetchOtpFromFirebase(String phoneNumber) {
-  String path = "/cycle_one/users/" + phoneNumber + "/otp";  // Construct the correct path
+  String path = "/cycle_one/users/" + phoneNumber + "/otp";
   if (Firebase.RTDB.getString(&fbdo, path)) {
     globalOtp = fbdo.stringData();
     Serial.println("Fetched OTP: " + globalOtp);
-    
-    // Store OTP and phone in Preferences for persistence across power cycles
     storeOtpInPreferences(globalOtp, phoneNumber);
-    
     return globalOtp;
   } else {
     Serial.println("Failed to fetch OTP: " + fbdo.errorReason());
@@ -103,9 +81,8 @@ String fetchOtpFromFirebase(String phoneNumber) {
   }
 }
 
-// Handle GET OTP request from phone 
+// Handle GET OTP request
 void getOtpHandleJsonData() {
-  Serial.println("Handling OTP request");
   if (server.hasArg("plain")) {
     String jsonData = server.arg("plain");
     Serial.println("Received JSON: " + jsonData);
@@ -120,10 +97,7 @@ void getOtpHandleJsonData() {
 
     String receivedData = doc["data"].as<String>();
     String receivedPhoneData = doc["phone"].as<String>();
-
     phone = receivedPhoneData;
-
-    Serial.println("Extracted Data: " + receivedData);
 
     if (receivedData == "getotp") {
       globalOtp = fetchOtpFromFirebase(receivedPhoneData);
@@ -136,86 +110,16 @@ void getOtpHandleJsonData() {
   }
 }
 
-// Handle Cycle Locking
-void lockCycleHandleJsonData() {
-  if (server.hasArg("plain")) {
-    String jsonData = server.arg("plain");
-    Serial.println("Received JSON: " + jsonData);
-
-    StaticJsonDocument<200> doc;
-    DeserializationError error = deserializeJson(doc, jsonData);
-    if (error) {
-      Serial.println("JSON Parsing Failed");
-      server.send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
-      return;
-    }
-
-    String receivedData = doc["data"].as<String>();
-    Serial.println("Extracted Data: " + receivedData);
-
-    if (receivedData == "lock_cycle") {
-      // Code for locking cycle without OTP
-      digitalWrite(LED_PIN, HIGH);  // Lock cycle - LED ON to indicate lock
-      
-      Serial.println("Cycle locked");
-      server.send(200, "application/json", "{\"message\": \"Cycle Locked Successfully\"}");
-    } else {
-      server.send(400, "application/json", "{\"error\": \"Locking cycle failed\"}");
-    }
-  } else {
-    server.send(400, "application/json", "{\"error\": \"No Data Sent\"}");
-  }
-}
-
-// Handle Cycle Return with OTP Verification
-void returnCycleHandleJsonData() {
-  if (server.hasArg("plain")) {
-    String jsonData = server.arg("plain");
-    Serial.println("Received JSON: " + jsonData);
-
-    StaticJsonDocument<200> doc;
-    DeserializationError error = deserializeJson(doc, jsonData);
-    if (error) {
-      Serial.println("JSON Parsing Failed");
-      server.send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
-      return;
-    }
-
-    String receivedData = doc["data"].as<String>();
-    String receivedOtp = doc["otp"].as<String>();
-    Serial.println("Extracted Data: " + receivedData);
-    Serial.println("Received OTP: " + receivedOtp);
-    Serial.println("Stored OTP: " + globalOtp);
-
-    if (receivedData == "return_cycle") {
-      if (receivedOtp == globalOtp) {
-        digitalWrite(LED_PIN, LOW);  // Unlock cycle - LED OFF to indicate unlock
-        
-        // Clear OTP from both global variable and Preferences
-        clearOtpFromPreferences();
-        
-        server.send(200, "application/json", "{\"message\": \"Cycle Returned Successfully\"}");
-      } else {
-        server.send(401, "application/json", "{\"error\": \"Incorrect OTP\"}");
-      }
-    } else {
-      server.send(400, "application/json", "{\"error\": \"Error in returning cycle\"}");
-    }
-  } else {
-    server.send(400, "application/json", "{\"error\": \"No Data Sent\"}");
-  }
-}
 
 void checkPasswordHandleJsonData() {
   if (server.hasArg("plain")) {  // Check if there's JSON data in the request
-    String requestBody = server.arg("plain");  
+    String requestBody = server.arg("plain");
     Serial.println("Received JSON: " + requestBody);
 
-    DynamicJsonDocument doc(200); // Adjust size based on JSON complexity
+    DynamicJsonDocument doc(200);  // Adjust size based on JSON complexity
     DeserializationError error = deserializeJson(doc, requestBody);
-
     if (error) {
-      Serial.println("JSON Parsing Failed");
+      Serial.println("JSON Parsing Failed: " + String(error.c_str()));
       server.send(400, "application/json", "{\"message\": \"Invalid JSON\"}");
       return;
     }
@@ -224,9 +128,22 @@ void checkPasswordHandleJsonData() {
     String receivedOtp = doc["otp"].as<String>();
 
     if (receivedOtp == globalOtp) {
-      // Write the lock opening logic here
-      digitalWrite(LED_PIN, LOW);  // Unlock cycle - LED OFF
-
+      // Unlock cycle - turn the LED OFF
+      digitalWrite(LED_PIN, LOW);
+      
+      // Update 'status' to "On_Ride" for the specific user and set the global "isAvailable" flag to false
+      String statusPath = "/cycle_one/users/" + phone + "/status";
+      String availabilityPath = "/cycle_one/isAvailable";
+      
+      bool statusUpdated = Firebase.RTDB.setString(&fbdo, statusPath, "On_Ride");
+      bool availUpdated  = Firebase.RTDB.setBool(&fbdo, availabilityPath, false);
+      
+      if (statusUpdated && availUpdated) {
+        Serial.println("Status updated to On_Ride and isAvailable set to false in Firebase.");
+      } else {
+        Serial.println("Failed to update status/availability: " + fbdo.errorReason());
+      }
+      
       Serial.println("Lock Opened");
       server.send(200, "application/json", "{\"message\": \"Lock Opened\"}");
     } else {
@@ -238,54 +155,113 @@ void checkPasswordHandleJsonData() {
   }
 }
 
+// Handle Cycle Locking
+void lockCycleHandleJsonData() {
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", "{\"error\": \"No Data Sent\"}");
+    return;
+  }
+
+  String jsonData = server.arg("plain");
+  Serial.println("Received JSON: " + jsonData);
+
+  StaticJsonDocument<200> doc;
+  DeserializationError err = deserializeJson(doc, jsonData);
+  if (err) {
+    Serial.println("JSON Parsing Failed: " + String(err.c_str()));
+    server.send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
+    return;
+  }
+
+  String receivedData = doc["data"] | "";
+  if (receivedData == "lock_cycle") {
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("Cycle locked");
+    server.send(200, "application/json", "{\"message\": \"Cycle Locked Successfully\"}");
+  } else {
+    server.send(400, "application/json", "{\"error\": \"Locking cycle failed\"}");
+  }
+}
+
+// Handle Cycle Return with OTP Verification
+void returnCycleHandleJsonData() {
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", "{\"error\":\"No Data Sent\"}");
+    return;
+  }
+
+  String jsonData = server.arg("plain");
+  Serial.println("Received JSON: " + jsonData);
+
+  StaticJsonDocument<200> doc;
+  DeserializationError err = deserializeJson(doc, jsonData);
+  if (err) {
+    Serial.println("JSON Parsing Failed: " + String(err.c_str()));
+    server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  String receivedData = doc["data"] | "";
+  String receivedOtp = doc["otp"] | "";
+
+  if (receivedData == "return_cycle") {
+    if (receivedOtp == globalOtp) {
+      digitalWrite(LED_PIN, LOW);
+
+      // Get current date and time
+      struct tm timeinfo;
+      char timeString[25];
+      if (getLocalTime(&timeinfo)) {
+        strftime(timeString, sizeof(timeString), "%Y-%m-%dT%H:%M:%S", &timeinfo);
+      } else {
+        strcpy(timeString, "Time Unavailable");
+      }
+      String currentTime = String(timeString);
+
+      String path = "/cycle_one/users/" + phone + "/returned_time";
+      if (Firebase.RTDB.setString(&fbdo, path, currentTime)) {
+        Serial.println("Returned time updated in Firebase: " + currentTime);
+        clearOtpFromPreferences();
+        server.send(200, "application/json", "{\"message\":\"Cycle Returned Successfully\"}");
+      } else {
+        Serial.println("Failed to update returned time: " + fbdo.errorReason());
+        server.send(500, "application/json", "{\"error\":\"Failed to update returned time\"}");
+      }
+    } else {
+      server.send(401, "application/json", "{\"error\":\"Incorrect OTP\"}");
+    }
+  } else {
+    server.send(400, "application/json", "{\"error\":\"Error in returning cycle\"}");
+  }
+
+  delay(100);
+  server.client().stop();
+}
+
 // Setup function
 void setup() {
   Serial.begin(115200);
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);  // Ensure LED is OFF initially
-  
-  // Retrieve OTP and phone from Preferences if available
+  digitalWrite(LED_PIN, LOW);
+
   retrieveOtpFromPreferences();
-  
-  // Connect to WiFi
+
   WiFi.begin(ssid, password);
   Serial.println("Connecting to WiFi...");
-
-  int retries = 20;  // Retry up to 20 times
-  while (WiFi.status() != WL_CONNECTED && retries > 0) {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    retries--;
   }
+  Serial.println("\nConnected to WiFi!");
+  Serial.print("ESP32 IP Address: ");
+  Serial.println(WiFi.localIP());
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nConnected to WiFi!");
-    Serial.print("ESP32 IP Address: ");
-    Serial.println(WiFi.localIP());  // Print ESP32 IP
+  configTime(0, 0, "pool.ntp.org");
 
-    // Corrected mDNS initialization
-    if (!MDNS.begin("gecw-cycles")) {
-      Serial.println("Error starting mDNS");
-      return;
-    }
-    
-    // Add service advertisement for HTTP
-    MDNS.addService("http", "tcp", 80);
-    Serial.println("mDNS started. Access at http://gecw-cycles.local");
-  } else {
-    Serial.println("\nFailed to connect to WiFi");
-    return;  // Stop execution if no WiFi
-  }
-
-  /* Assign the api key (required) */
   config.api_key = API_KEY;
-
-  /* Assign the RTDB URL (required) */
   config.database_url = DATABASE_URL;
-
-  config.token_status_callback = tokenStatusCallback;  // Token helper
-
-  config.signer.anonymous = true;  // Enable anonymous sign-in
+  config.token_status_callback = tokenStatusCallback;
+  config.signer.anonymous = true;
 
   if (Firebase.signUp(&config, &auth, "", "")) {
     Serial.println("Firebase SignUp Success");
@@ -296,7 +272,9 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  // Set up Web Server routes
+  String ipAddress = WiFi.localIP().toString();
+  Firebase.RTDB.setString(&fbdo, "/cycle_one/ip_address", ipAddress);
+
   server.on("/get-otp", HTTP_POST, getOtpHandleJsonData);
   server.on("/check-password", HTTP_POST, checkPasswordHandleJsonData);
   server.on("/lock_cycle", HTTP_POST, lockCycleHandleJsonData);
@@ -304,19 +282,12 @@ void setup() {
   server.begin();
 
   Serial.println("Web Server started...");
-  
-  if (globalOtp != "") {
-    Serial.println("Restored previous OTP session: " + globalOtp + " for phone: " + phone);
-  }
 }
 
 // Loop function
 void loop() {
-  server.handleClient();  // Handle incoming requests
-  
-  // Ensure WiFi stays connected
+  server.handleClient();
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi Disconnected! Reconnecting...");
     WiFi.disconnect();
     WiFi.reconnect();
   }
