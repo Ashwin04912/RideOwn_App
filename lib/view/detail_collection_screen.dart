@@ -4,7 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mini_pro_app/view_model/controller/detail_collecting_view_model.dart';
-import 'package:slider_button/slider_button.dart';
+
 
 class DetailCollectionScreen extends StatefulWidget {
   const DetailCollectionScreen({super.key});

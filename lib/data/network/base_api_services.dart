@@ -14,6 +14,6 @@ abstract class BaseApiServices {
   Future<Either<AppExceptions, UserData>> getAllDataFromFirebase({
     required String path,
   });
-
+Future <bool> checkCycleAvailability();
   
 }
