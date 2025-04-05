@@ -13,7 +13,7 @@ class EspLocalRepo {
       Map<String, dynamic> data) async {
     debugPrint("in getOtpApi");
     debugPrint(data.toString());
-    await AppUrls.resolveEspIp();
+    // await AppUrls.resolveEspIp();
     // Get the resolved URL first
     final url = AppUrls.espGetOtpUrl;
     debugPrint("Using resolved URL: $url");
@@ -24,7 +24,7 @@ class EspLocalRepo {
       Map<String, dynamic> data) async {
     debugPrint("in checkPasswordApi");
     debugPrint(data.toString());
-    await AppUrls.resolveEspIp();
+    // await AppUrls.resolveEspIp();
     final url = AppUrls.espCheckPassUrl;
     debugPrint("Using resolved URL: $url");
     return await _apiServices.postApi(url: url, data: data);
@@ -34,7 +34,7 @@ class EspLocalRepo {
       Map<String, dynamic> data) async {
     debugPrint("in lockCycleApi");
     debugPrint(data.toString());
-    await AppUrls.resolveEspIp();
+    // await AppUrls.resolveEspIp();
     final url = AppUrls.espLockCycleUrl;
     debugPrint("Using resolved URL: $url");
     return await _apiServices.postApi(url: url, data: data);
@@ -48,7 +48,7 @@ class EspLocalRepo {
   debugPrint("in returnCycleApi $phoneNumber");
   debugPrint(data.toString());
   
-  await AppUrls.resolveEspIp();
+  // await AppUrls.resolveEspIp();
   final url = AppUrls.espReturnCycle;
   debugPrint("Using resolved URL: $url");
   

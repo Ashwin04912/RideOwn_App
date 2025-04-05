@@ -9,7 +9,7 @@ import 'package:mini_pro_app/models/user_data/user_data_model.dart';
 
 class NetworkApiServices extends BaseApiServices {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
+  final _database = FirebaseDatabase.instance.ref();
 
   static final Dio _dio = Dio(
     BaseOptions(
@@ -19,71 +19,71 @@ class NetworkApiServices extends BaseApiServices {
     ),
   );
 
- @override
-Future<Either<AppExceptions, Map<String, dynamic>>> postApi({
-  required String url, 
-  required Map<String, dynamic> data
-}) async {
-  debugPrint("in post api");
-  try {
-    debugPrint(url);
-    
-    // Set a reasonable timeout
-    final response = await _dio.post(
-      url, 
-      data: data,
-      options: Options(
-        sendTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-      ),
-    );
-    
-    debugPrint("Response status: ${response.statusCode}");
-    debugPrint("Response data: ${response.data}");
-    
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return right(response.data is Map<String, dynamic> 
-          ? response.data 
-          : {"data": response.data});
-    } else {
-      // Handle different status codes with more specific exceptions
-      return left(ServerException("Server responded with status code: ${response.statusCode}"));
-    }
-  } on DioException catch (e) {
-    debugPrint("DioException: $e");
-    
-    // More specific error handling based on Dio exception type
-    if (e.type == DioExceptionType.connectionTimeout || 
-        e.type == DioExceptionType.sendTimeout || 
-        e.type == DioExceptionType.receiveTimeout) {
-      return left(RequestTimeOut("Request timed out. Please try again."));
-    } else if (e.type == DioExceptionType.connectionError) {
-      return left(InternetException("No internet connection. Please check your network."));
-    } else if (e.response != null) {
-      // Handle specific HTTP error codes
-      final statusCode = e.response?.statusCode;
-      final responseData = e.response?.data;
-      String errorMessage = "Server error";
-      
-      if (responseData is Map && responseData.containsKey('message')) {
-        errorMessage = responseData['message'];
-      }
-      
-      if (statusCode == 500) {
-        return left(ServerException("Internal server error: $errorMessage"));
-      } else if (statusCode == 404) {
-        return left(ServerException("Resource not found: $errorMessage"));
+  @override
+  Future<Either<AppExceptions, Map<String, dynamic>>> postApi(
+      {required String url, required Map<String, dynamic> data}) async {
+    debugPrint("in post api");
+    try {
+      debugPrint(url);
+
+      // Set a reasonable timeout
+      final response = await _dio.post(
+        url,
+        data: data,
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      debugPrint("Response status: ${response.statusCode}");
+      debugPrint("Response data: ${response.data}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return right(response.data is Map<String, dynamic>
+            ? response.data
+            : {"data": response.data});
       } else {
-        return left(ServerException("HTTP error $statusCode: $errorMessage"));
+        // Handle different status codes with more specific exceptions
+        return left(ServerException(
+            "Server responded with status code: ${response.statusCode}"));
       }
-    } else {
-      return left(ServerException("Network error: ${e.message}"));
+    } on DioException catch (e) {
+      debugPrint("DioException: $e");
+
+      // More specific error handling based on Dio exception type
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return left(RequestTimeOut("Request timed out. Please try again."));
+      } else if (e.type == DioExceptionType.connectionError) {
+        return left(InternetException(
+            "No internet connection. Please check your network."));
+      } else if (e.response != null) {
+        // Handle specific HTTP error codes
+        final statusCode = e.response?.statusCode;
+        final responseData = e.response?.data;
+        String errorMessage = "Server error";
+
+        if (responseData is Map && responseData.containsKey('message')) {
+          errorMessage = responseData['message'];
+        }
+
+        if (statusCode == 500) {
+          return left(ServerException("Internal server error: $errorMessage"));
+        } else if (statusCode == 404) {
+          return left(ServerException("Resource not found: $errorMessage"));
+        } else {
+          return left(ServerException("HTTP error $statusCode: $errorMessage"));
+        }
+      } else {
+        return left(ServerException("Network error: ${e.message}"));
+      }
+    } catch (e) {
+      debugPrint("Unexpected Error: $e");
+      return left(ServerException("Unexpected error occurred: $e"));
     }
-  } catch (e) {
-    debugPrint("Unexpected Error: $e");
-    return left(ServerException("Unexpected error occurred: $e"));
   }
-}
 
   @override
   Future<Either<AppExceptions, Unit>> loginApi(
@@ -108,7 +108,7 @@ Future<Either<AppExceptions, UserData>> getAllDataFromFirebase({
   try {
     debugPrint("Fetching data from Firebase at path: $path");
 
-    DatabaseReference ref = _database.ref(path);
+    DatabaseReference ref = _database.child(path);
     DatabaseEvent event = await ref.once(); // Fetch data once
 
     final snapshotValue = event.snapshot.value;
@@ -148,10 +148,22 @@ Future<Either<AppExceptions, UserData>> getAllDataFromFirebase({
     debugPrint("Unexpected error: $e");
     return left(AppExceptions("Unexpected error: ${e.toString()}"));
   }
+  }
+
+  @override
+  Future<bool> checkCycleAvailability() async {
+    try {
+      final snapshot = await _database.child("cycle_one/isAvailable").get();
+      debugPrint(snapshot.value.toString());
+      if (snapshot.exists) {
+        final isAvailable = snapshot.value as bool;
+        return isAvailable;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print("Error checking cycle availability: $e");
+      return false;
+    }
+  }
 }
-
-}
-
-
-
-

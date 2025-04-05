@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mini_pro_app/res/assets/image_assets.dart';
 import 'package:mini_pro_app/res/routes/routes_name.dart';
+import 'package:mini_pro_app/utils/utils.dart';
 import 'dart:math' as math;
+
+import 'package:mini_pro_app/view_model/controller/home_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  final homeController = Get.put(HomeController());
   late AnimationController _wheelController;
   late AnimationController _bounceController;
   final List<String> _quotes = [
@@ -40,19 +43,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     )..repeat(reverse: true);
 
     _currentQuote = _quotes[_quoteIndex];
-    
+
     // Change quote every 7 seconds
     Future.delayed(const Duration(seconds: 7), _changeQuote);
   }
 
   void _changeQuote() {
     if (!mounted) return;
-    
+
     setState(() {
       _quoteIndex = (_quoteIndex + 1) % _quotes.length;
       _currentQuote = _quotes[_quoteIndex];
     });
-    
+
     Future.delayed(const Duration(seconds: 7), _changeQuote);
   }
 
@@ -173,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        
+
                         // Bouncing bicycle
                         AnimatedBuilder(
                           animation: _bounceController,
@@ -220,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   );
                                 },
                               ),
-                              
+
                               // Bicycle frame
                               Container(
                                 width: 80,
@@ -228,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 color: Colors.greenAccent,
                                 margin: const EdgeInsets.only(bottom: 10),
                               ),
-                              
+
                               // Wheel 2
                               AnimatedBuilder(
                                 animation: _wheelController,
@@ -270,7 +273,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   // Quote section
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 500),
-                    transitionBuilder: (Widget child, Animation<double> animation) {
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
                       return FadeTransition(
                         opacity: animation,
                         child: child,
@@ -282,7 +286,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         horizontal: 20,
                         vertical: 15,
                       ),
-                      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 5),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(15),
@@ -318,57 +323,63 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   const Spacer(),
 
                   // App description
-                 
 
                   const SizedBox(height: 30),
 
                   // Ride request button
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.greenAccent.withOpacity(0.3),
-                          blurRadius: 15,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.toNamed(RoutesName.detailCollectionScreen);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 18,
-                        ),
-                        backgroundColor: Colors.greenAccent[700],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.pedal_bike,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            "Start Your Adventure",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
+                  Obx(
+                    () => Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.greenAccent.withOpacity(0.3),
+                            blurRadius: 15,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
+                      child: homeController.loading.value
+                          ? Center(
+                              child: Utils.loadingAnimation(),
+                            )
+                          : ElevatedButton(
+                              onPressed: () {
+                                homeController.checkCycleAvailability();
+                                
+                              },
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
+                                backgroundColor: Colors.greenAccent[700],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.pedal_bike,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "Start Your Adventure",
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                     ),
                   ),
 
