@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mini_pro_app/view_model/controller/detail_collecting_view_model.dart';
 
-
 class DetailCollectionScreen extends StatefulWidget {
   const DetailCollectionScreen({super.key});
 
@@ -29,7 +28,8 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
   bool _formSubmitted = false;
 
   bool _isFormValid() {
-    return (_formKey.currentState?.validate() ?? false) && _selectedClass != null;
+    return (_formKey.currentState?.validate() ?? false) &&
+        _selectedClass != null;
   }
 
   void _submitForm() async {
@@ -41,7 +41,8 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
       int otp = generateOtp();
       debugPrint("Generated OTP: $otp");
 
-      detailCollectionController.saveUserDataToFirebase(otp: otp.toString(), year: _selectedClass!);
+      detailCollectionController.saveUserDataToFirebase(
+          otp: otp.toString(), year: _selectedClass!);
 
       // Show OTP in a popup
       _showOtpPopup(otp);
@@ -198,6 +199,9 @@ class _DetailCollectionScreenState extends State<DetailCollectionScreen> {
                         }
                         if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                           return "Enter a valid email";
+                        }
+                        if (!value.trim().endsWith('@gecwyd.ac.in')) {
+                          return "Email must be a gecwyd.ac.in address";
                         }
                         return null;
                       },

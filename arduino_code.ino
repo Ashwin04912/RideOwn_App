@@ -13,6 +13,9 @@
 #define API_KEY "AIzaSyC_wmflQu4qHyqStC6PapK49_JhwLzmV3U"
 #define DATABASE_URL "https://gecw-cycles-default-rtdb.firebaseio.com/"
 
+#define IN1 18  // L298N Input 1
+#define IN2 19  // L298N Input 2
+
 // WiFi Credentials
 const char* ssid = "hello";         // Change to your phone's hotspot SSID
 const char* password = "11221122";  // Change to your phone's hotspot password
@@ -128,6 +131,7 @@ void checkPasswordHandleJsonData() {
     String receivedOtp = doc["otp"].as<String>();
 
     if (receivedOtp == globalOtp) {
+      
       // Unlock cycle - turn the LED OFF
       digitalWrite(LED_PIN, LOW);
       
@@ -145,6 +149,9 @@ void checkPasswordHandleJsonData() {
       }
       
       Serial.println("Lock Opened");
+      unlock();  // Unlock lock
+      delay(2000);
+
       server.send(200, "application/json", "{\"message\": \"Lock Opened\"}");
     } else {
       Serial.println("Incorrect OTP");
@@ -175,8 +182,11 @@ void lockCycleHandleJsonData() {
 
   String receivedData = doc["data"] | "";
   if (receivedData == "lock_cycle") {
+    
     digitalWrite(LED_PIN, HIGH);
     Serial.println("Cycle locked");
+    lock();  // Lock back
+    delay(2000);
     server.send(200, "application/json", "{\"message\": \"Cycle Locked Successfully\"}");
   } else {
     server.send(400, "application/json", "{\"error\": \"Locking cycle failed\"}");
@@ -207,7 +217,7 @@ void returnCycleHandleJsonData() {
   if (receivedData == "return_cycle") {
     if (receivedOtp == globalOtp) {
       digitalWrite(LED_PIN, LOW);
-
+      
       // Get current date and time
       struct tm timeinfo;
       char timeString[25];
@@ -222,6 +232,8 @@ void returnCycleHandleJsonData() {
       if (Firebase.RTDB.setString(&fbdo, path, currentTime)) {
         Serial.println("Returned time updated in Firebase: " + currentTime);
         clearOtpFromPreferences();
+        lock();  // Lock back
+        delay(2000);
         server.send(200, "application/json", "{\"message\":\"Cycle Returned Successfully\"}");
       } else {
         Serial.println("Failed to update returned time: " + fbdo.errorReason());
@@ -240,6 +252,11 @@ void returnCycleHandleJsonData() {
 
 // Setup function
 void setup() {
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+
   Serial.begin(115200);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
@@ -276,7 +293,7 @@ void setup() {
   Firebase.RTDB.setString(&fbdo, "/cycle_one/ip_address", ipAddress);
 
   server.on("/get-otp", HTTP_POST, getOtpHandleJsonData);
-  server.on("/check-password", HTTP_POST, checkPasswordHandleJsonData);
+  server.on("/check-password", HTTP_POST, checkPasswordHandleJsonData); //unlovk
   server.on("/lock_cycle", HTTP_POST, lockCycleHandleJsonData);
   server.on("/return_cycle", HTTP_POST, returnCycleHandleJsonData);
   server.begin();
@@ -291,4 +308,23 @@ void loop() {
     WiFi.disconnect();
     WiFi.reconnect();
   }
+}
+
+void unlock() {
+    digitalWrite(IN1, HIGH);  // Forward rotation (unlock)
+    digitalWrite(IN2, LOW);
+    delay(1000);  // Lock opens for 1 second
+    stopMotor();
+}
+
+void lock() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);  // Reverse rotation (lock)
+    delay(1000);  // Lock engages for 1 second
+    stopMotor();
+}
+
+void stopMotor() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, LOW);
 }
