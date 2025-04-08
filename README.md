@@ -1,4 +1,4 @@
-# 🚲 Smart Cycle Locking System
+# 🚲 Secure & Seamless Cycle with User Tracking
 
 A **Flutter-based mobile app** built for our mini project: **Smart Cycle Locking System** — a secure and convenient way to lock/unlock your bicycle using your smartphone via Bluetooth.
 
