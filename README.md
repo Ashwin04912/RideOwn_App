@@ -1,8 +1,6 @@
 # 🚲 Secure & Seamless Cycle with User Tracking
 
-A **Flutter-based mobile app** built for our mini project: **Smart Cycle Locking System** — a secure and convenient way to lock/unlock your bicycle using your smartphone via Bluetooth.
-
-## 🚲 Project Overview – Secure & Seamless Cycle with User Tracking
+## 🚲 Project Overview 
 
 
 This project presents a smart bicycle-sharing system designed for college campuses, combining IoT, mobile app automation, and user tracking for a seamless, secure experience.
