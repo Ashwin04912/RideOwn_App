@@ -2,9 +2,12 @@
 
 A **Flutter-based mobile app** built for our mini project: **Smart Cycle Locking System** — a secure and convenient way to lock/unlock your bicycle using your smartphone via Bluetooth.
 
-## 📱 Project Overview
+## 🚲 Project Overview – Secure & Seamless Cycle with User Tracking
 
-The Smart Cycle Locking System aims to enhance personal bicycle security using a smartphone-controlled locking mechanism. By integrating **Flutter**, **Bluetooth communication**, and **microcontroller hardware (like Arduino)**, this system allows users to lock/unlock their cycles, eliminating the need for physical keys.
+
+This project presents a smart bicycle-sharing system designed for college campuses, combining IoT, mobile app automation, and user tracking for a seamless, secure experience.
+
+The system enables students and staff to request, unlock, and return bicycles using a Flutter mobile app integrated with an ESP32-based electronic lock. It eliminates the need for manual key handling by implementing OTP-based authentication via Wi-Fi, with user and usage data securely stored and managed through Firebase.
 
 ---
 
